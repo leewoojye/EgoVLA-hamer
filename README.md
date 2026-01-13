@@ -50,16 +50,20 @@ bash fetch_demo_data.sh
 Besides these files, you also need to download the MANO model. Please visit the [MANO website](https://mano.is.tue.mpg.de) and register to get access to the downloads section.  We only require the right hand model. You need to put `MANO_RIGHT.pkl` under the `_DATA/data/mano` folder.
 
 ## Data Preparation
-You can set the input data, output data path, and natural language instructions in the `run_pipeline.sh` file as below. And you have to place the input video data in the path you set. For example, you can put your videos under the `data_in/egovla_demo` folder. Data preprocessed by the pipeline is newly created in a folder named `data_out_${current time}`. (If you set the output path, the folder will be renamed.)
+You should set the input data path(`VIDEO_PATH`), and natural language instructions(`INSTRUCTION`) in the `run_pipeline.sh` file as below. (setting `OUTPUT_ROOT` is optional) And you have to place the input video data in the path you set. For example, you can put your videos under the `data_in/egovla_demo` folder. Data preprocessed by the pipeline is newly created in a folder located in root directory named `data_out_${current time}`. 
 ``` bash
 # 기본값 설정
-VIDEO_PATH=${1:-"data_in/egovla_demo/공꺼내기_화장실_3.MOV"}
+VIDEO_PATH=${1:-"data_in/egovla_demo/video_name.MOV"}
 OUTPUT_ROOT=${2:-"data_out"}
 INSTRUCTION=${3:-"Get the ball out"}
 ```
+The output folder consists of an npz file containing the mano parameter extracted for each frame and a mesh image generated for each frame.
 
 ## Running Pipeline
 You can simply run `run_pipeline.sh` file to run all steps of the pipeline, where OUTPUT_ROOT is the name of the root directory folder where the output will be stored. 
+``` bash
+bash run_pipeline.sh
+```
 
 ## For more information about HaMeR ...
 You can find out more about the hammer in the original repository. [HaMeR: Hand Mesh Recovery](https://github.com/geopavlakos/hamer)
