@@ -1,7 +1,7 @@
 # EgoVLA-hamer(HaMeR: Hand Mesh Recovery)
 ## Overview
 This repository is a combination of the data preprocessing pipeline in the EgoVLA paper with the hamer repository. <br>
-paper : [EgoVLA: Learning Vision-Language-Action Models from Egocentric Human Videos](https://arxiv.org/abs/2507.12440)
+paper : [EgoVLA: Learning Vision-Language-Action Models from Egocentric Human Videos](https://arxiv.org/abs/2507.12440) <br>
 hamer repository : [HaMeR: Hand Mesh Recovery](https://github.com/geopavlakos/hamer)
 
 ## Data Preprocessing Pipeline
