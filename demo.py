@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--side_view', dest='side_view', action='store_true', default=False, help='If set, render side view also')
     parser.add_argument('--full_frame', dest='full_frame', action='store_true', default=True, help='If set, render all people together also')
     parser.add_argument('--save_mesh', dest='save_mesh', action='store_true', default=False, help='If set, save meshes to disk also')
+    parser.add_argument('--save_params', dest='save_params', action='store_true', default=False, help='If set, save MANO parameters to disk also')
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size for inference/fitting')
     parser.add_argument('--rescale_factor', type=float, default=2.0, help='Factor for padding the bbox')
     parser.add_argument('--body_detector', type=str, default='vitdet', choices=['vitdet', 'regnety'], help='Using regnety improves runtime and reduces memory')
@@ -187,6 +188,41 @@ def main():
                     camera_translation = cam_t.copy()
                     tmesh = renderer.vertices_to_trimesh(verts, camera_translation, LIGHT_BLUE, is_right=is_right)
                     tmesh.export(os.path.join(args.out_folder, f'{img_fn}_{person_id}.obj'))
+                
+                # Save MANO parameters
+                if args.save_params:
+                    # R (Global Orientation) - 3x3 Rotation Matrix
+                    # Note: This is the rotation of the MANO model. If input was left hand, it's the rotation of the flipped right hand.
+                    global_orient_rotmat = out['pred_mano_params']['global_orient'][n].detach().cpu().numpy().squeeze() # (3, 3)
+
+                    # T (Translation) - 3D Vector
+                    # Note: Camera translation
+                    translation = cam_t 
+
+                    # Theta (MANO Pose Parameters) - 48D Vector (Axis-Angle)
+                    # Convert global orientation to axis-angle
+                    global_orient_aa, _ = cv2.Rodrigues(global_orient_rotmat)
+                    
+                    # Convert hand pose (finger joints) to axis-angle
+                    hand_pose_rotmats = out['pred_mano_params']['hand_pose'][n].detach().cpu().numpy() # (15, 3, 3)
+                    hand_pose_aa = []
+                    for i in range(hand_pose_rotmats.shape[0]):
+                        aa, _ = cv2.Rodrigues(hand_pose_rotmats[i])
+                        hand_pose_aa.append(aa)
+                    hand_pose_aa = np.concatenate(hand_pose_aa).flatten()
+                    
+                    # Concatenate to get full theta (global orient + hand pose)
+                    theta = np.concatenate([global_orient_aa.flatten(), hand_pose_aa]) # (3 + 45 = 48,)
+
+                    params_dict = {
+                        'global_orient_rotmat': global_orient_rotmat,   # R
+                        'translation': translation,                     # T
+                        'theta': theta,                                 # Theta (MANO Pose)
+                        'betas': out['pred_mano_params']['betas'][n].detach().cpu().numpy(),
+                        'is_right': is_right
+                    }
+                    np.savez(os.path.join(args.out_folder, f'{img_fn}_{person_id}_params.npz'), **params_dict)
+
 
         # Render front view
         if args.full_frame and len(all_verts) > 0:
